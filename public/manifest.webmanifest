@@ -1,0 +1,12 @@
+{
+  "name": "Not A Rythm Game",
+  "short_name": "NARG",
+  "description": "A two-lane rhythm game with a chart editor anyone can use.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0E0E0F",
+  "theme_color": "#0E0E0F",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
