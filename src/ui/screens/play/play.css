@@ -1,0 +1,86 @@
+.play { position: fixed; inset: 0; overflow: hidden; }
+.play__canvas { position: absolute; inset: 0; z-index: 1; }
+.play__canvas canvas { display: block; }
+
+.play__top {
+  position: absolute; z-index: 2; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: var(--space-md) var(--space-lg);
+  pointer-events: none;
+}
+.play__song { display: flex; flex-direction: column; gap: 2px; max-width: 50vw; }
+.play__title { font-size: var(--size-lg); font-weight: var(--weight-semi-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.play__artist { font-size: var(--size-xs); }
+.play__stats { display: flex; flex-direction: column; align-items: flex-end; }
+.play__score { font-size: clamp(1.5rem, 1rem + 2vw, 2.4rem); font-weight: var(--weight-semi-bold); letter-spacing: 0.04em; line-height: 1; }
+.play__acc { font-size: var(--size-sm); color: var(--color-text-muted); margin-top: 4px; }
+
+.play__progress { position: absolute; z-index: 2; top: 0; left: 0; right: 0; height: 2px; background: var(--color-line); }
+.play__progress-fill { height: 100%; background: var(--color-accent); transform-origin: left; transform: scaleX(0); }
+
+.play__gauge {
+  --fill: var(--color-surface);
+  --frame: var(--color-line-strong);
+  position: absolute; z-index: 2;
+  left: 50%; top: var(--space-md); transform: translateX(-50%);
+  width: min(360px, 34vw); height: 14px;
+  overflow: hidden;
+}
+.play__gauge-fill {
+  position: absolute; inset: 0;
+  background: var(--color-lane-down);
+  transform-origin: left; transform: scaleX(0);
+  transition: transform 0.12s linear, background-color var(--motion-base) var(--motion-easing);
+}
+.play__gauge.is-clear .play__gauge-fill { background: var(--color-accent); }
+.play__gauge-mark { position: absolute; top: 0; bottom: 0; left: 70%; width: 2px; background: var(--color-text); opacity: 0.6; z-index: 1; }
+.play__gauge-label { position: absolute; left: calc(70% + 6px); top: 50%; transform: translateY(-50%); font-size: 9px; letter-spacing: var(--tracking-label); z-index: 1; color: var(--color-text); mix-blend-mode: difference; }
+
+.play__combo {
+  position: absolute; z-index: 2;
+  left: 50%; top: 17%;
+  transform-origin: center;
+  display: flex; flex-direction: column; align-items: center;
+  margin-left: -80px; width: 160px;
+  pointer-events: none;
+  transition: opacity var(--motion-fast) var(--motion-easing);
+}
+.play__combo-num { font-size: clamp(2.2rem, 1.4rem + 3vw, 3.6rem); font-weight: var(--weight-bold); line-height: 1; letter-spacing: -0.02em; }
+.play__combo-label { font-size: var(--size-xxs); letter-spacing: 0.4em; color: var(--color-text-muted); }
+
+.play__mode {
+  --fill: var(--color-accent-soft);
+  --frame: var(--color-accent);
+  position: absolute; z-index: 2; left: 50%; bottom: 64px; transform: translateX(-50%);
+  padding: 3px 12px; font-size: var(--size-xxs); letter-spacing: var(--tracking-label); color: var(--color-accent);
+}
+
+.play__intro {
+  position: absolute; z-index: 3; left: 0; right: 0; bottom: 9%;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-xs);
+  text-align: center; pointer-events: none;
+}
+.play__intro h1 { font-size: var(--size-h2); }
+.play__keys { display: flex; gap: var(--space-lg); font-size: var(--size-xs); margin-top: var(--space-xs); }
+.play__keys .kbd { margin-right: 4px; }
+
+.play__debug {
+  position: absolute; z-index: 4; left: var(--space-md); bottom: var(--space-md);
+  font-size: var(--size-xxs); color: var(--color-text-muted);
+  padding: 4px 8px; background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  pointer-events: none;
+}
+
+.play__countdown {
+  position: absolute; inset: 0; z-index: 5;
+  display: grid; place-items: center; pointer-events: none;
+}
+.play__countdown span {
+  font-size: clamp(4rem, 2rem + 8vw, 9rem); font-weight: var(--weight-bold); color: var(--color-accent);
+  animation: countdown 0.5s var(--motion-easing) both;
+}
+@keyframes countdown { from { opacity: 0; transform: scale(1.6); } 60% { opacity: 1; } to { opacity: 0.85; transform: scale(1); } }
+
+.play__pause .modal { text-align: left; }
+.play__pause-actions { display: flex; flex-direction: column; gap: var(--space-xs); margin-top: var(--space-md); }
+.play__pause-actions .btn { justify-content: space-between; }
