@@ -1,7 +1,6 @@
 /**
- * Procedural sounds. No audio assets ship with the game: every hitsound, UI blip
- * and the demo track are rendered once with an OfflineAudioContext.
- * The instrument functions take any BaseAudioContext so the demo song reuses them.
+ * Procedural sounds: every hitsound and UI blip is rendered once with an
+ * OfflineAudioContext. No sound-effect assets ship with the game.
  */
 
 export type SfxName =
@@ -213,36 +212,4 @@ export const renderSfxBank = async (sampleRate: number): Promise<Record<SfxName,
     }),
   );
   return Object.fromEntries(entries) as Record<SfxName, AudioBuffer>;
-};
-
-// ---------------------------------------------------------------- WAV export
-/** Encodes an AudioBuffer as 16-bit PCM WAV (used to package generated audio) */
-export const encodeWav = (buffer: AudioBuffer, maxChannels = 2): Uint8Array => {
-  const ch = Math.min(maxChannels, buffer.numberOfChannels);
-  const len = buffer.length;
-  const out = new DataView(new ArrayBuffer(44 + len * ch * 2));
-  const w = (o: number, s: string) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
-  w(0, 'RIFF');
-  out.setUint32(4, 36 + len * ch * 2, true);
-  w(8, 'WAVE');
-  w(12, 'fmt ');
-  out.setUint32(16, 16, true);
-  out.setUint16(20, 1, true);
-  out.setUint16(22, ch, true);
-  out.setUint32(24, buffer.sampleRate, true);
-  out.setUint32(28, buffer.sampleRate * ch * 2, true);
-  out.setUint16(32, ch * 2, true);
-  out.setUint16(34, 16, true);
-  w(36, 'data');
-  out.setUint32(40, len * ch * 2, true);
-  const data = Array.from({ length: ch }, (_, c) => buffer.getChannelData(c));
-  let o = 44;
-  for (let i = 0; i < len; i++) {
-    for (let c = 0; c < ch; c++) {
-      const s = Math.max(-1, Math.min(1, data[c][i]));
-      out.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-      o += 2;
-    }
-  }
-  return new Uint8Array(out.buffer);
 };

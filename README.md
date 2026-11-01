@@ -4,7 +4,16 @@ A two-lane rhythm game (think Muse Dash meets Taiko) with a chart editor anyone 
 drop a song, chart it in minutes, share it as a single `.narg` file.
 
 Everything runs in the browser. There is no backend, no account and no artwork: every visual is
-procedural and every sound is synthesized.
+procedural and every sound effect is synthesized.
+
+## Built-in songs
+
+Every `.narg` in `charts/` ships with the game as a built-in song. Drop a file in, and it shows up in
+song select (the dev server reloads by itself). The song list reads only each package's `chart.json`,
+which is inlined at build time. The audio is fetched the first time the song plays.
+
+`charts/fearless-pt2.narg` (Lost Sky - Fearless pt.II, Medium and Hard) is listed first and plays on the
+title screen. Built-in songs open in the editor as an editable copy.
 
 ## Play
 
@@ -76,17 +85,17 @@ npm run gen:stress   # writes stress/stress.narg (~10k notes, 380 speed changes)
 
 ```
 src/core/      pure TypeScript, no React
-  audio/       AudioEngine (audio clock, latency-compensated), synthesized SFX, lo-fi instruments,
+  audio/       AudioEngine (audio clock, latency-compensated), synthesized SFX,
                WSOLA time-stretch + AudioWorklet
   chart/       types, TimingMap (tick↔ms↔scroll position), compile (SoA), serialize, lint & difficulty
   game/        GameSession: judgement, scoring, gauge (frame-rate independent, event ring buffer)
   render/      Pixi playfield (pooled sprites, baked textures), shared long-lived Pixi app
   editor/      immutable chart operations (identity-preserving for selections)
   workers/     waveform peak mipmaps, onset/autocorrelation tempo detection
-  demo/        the built-in lo-fi track: one arrangement table drives the audio and both charts
 src/ui/        React screens, theme tokens, chamfer/HUD component kit
   editor/      editor screen (lazy chunk), timeline (Pixi notes + 2D canvas grid/waveform)
 src/storage/   IndexedDB (songs, bests, autosave), settings
+charts/        built-in songs (.narg), bundled by the plugin in vite.config.ts
 ```
 
 ### Performance notes

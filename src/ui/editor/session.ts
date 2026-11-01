@@ -4,7 +4,6 @@ import { parseChart, unpackNarg } from '../../core/chart/serialize';
 import { createEmptyChart, newId, type Chart } from '../../core/chart/types';
 import { settings } from '../../storage/settings';
 import { applyTiming } from '../../core/editor/ops';
-import { DEMO_ID } from '../../core/demo/demoSong';
 import { autosaveDb, songsDb, type AutosaveRecord } from '../../storage/db';
 import { toast } from '../components/overlays';
 import { go } from '../store/app';
@@ -57,19 +56,19 @@ export const openFile = async (file: File): Promise<void> => {
   detectTempo(true);
 };
 
-/** Opens a library song (the built-in demo opens as an editable copy) */
+/** Opens a library song (built-in songs open as an editable copy) */
 export const openSong = async (songId: string): Promise<void> => {
   const entry = useLibrary.getState().songs.find((s) => s.id === songId);
   const rec = entry?.builtin ? undefined : await songsDb.get(songId);
   if (!entry && !rec) throw new Error('Song not found');
   const chart = structuredClone(rec?.chart ?? entry!.chart);
   const [{ name, data }, buffer] = await Promise.all([getSongAudioBytes(songId), getSongBuffer(songId)]);
-  if (songId === DEMO_ID) {
+  if (entry?.builtin) {
     chart.id = newId();
     chart.meta.title = `${chart.meta.title} (copy)`;
     chart.meta.charter = 'You';
   }
-  editor().load({ songId: chart.id, chart, audioName: name, audioData: data, buffer, inLibrary: songId !== DEMO_ID });
+  editor().load({ songId: chart.id, chart, audioName: name, audioData: data, buffer, inLibrary: !entry?.builtin });
   afterLoad(buffer);
   // newer unsaved work for this song?
   const auto = await autosaveDb.get(chart.id).catch(() => undefined);

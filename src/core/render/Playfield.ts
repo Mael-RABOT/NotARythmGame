@@ -302,9 +302,10 @@ export class Playfield {
       glow.tint = color;
       glow.scale.set((this.noteSize * 2.2) / 128);
       const f = this.laneFlash[lane];
-      f.position.set(this.judgeX, this.laneY[lane]);
+      // the whole lane glows, brightest at the judgement line (~17 % across, see the flash texture)
+      f.position.set(0, this.laneY[lane]);
       f.tint = color;
-      f.width = Math.min(w - this.judgeX, 640);
+      f.width = w;
       f.height = this.laneH;
     }
 

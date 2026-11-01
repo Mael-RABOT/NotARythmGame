@@ -187,7 +187,7 @@ export const SongSelectScreen: React.FC<{ focusSongId?: string }> = ({ focusSong
 
         {song && diff ? (
           <section className="select__detail chamfer hud" key={song.id}>
-            <Eyebrow><DecodeText text={song.builtin ? 'Built-in · synthesized' : `Charted by ${song.chart.meta.charter}`} /></Eyebrow>
+            <Eyebrow><DecodeText text={`${song.builtin ? 'Built-in · ' : ''}Charted by ${song.chart.meta.charter}`} /></Eyebrow>
             <h1 className="select__title"><GlitchText text={song.chart.meta.title} onLoad /></h1>
             <p className="muted">{song.chart.meta.artist}{song.chart.meta.source ? ` · ${song.chart.meta.source}` : ''}</p>
 

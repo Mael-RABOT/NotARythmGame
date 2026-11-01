@@ -156,9 +156,11 @@ export const buildTextures = (renderer: Renderer, p: Palette): TextureBank => {
 
   const flash = canvasTexture(256, 4, (ctx) => {
     const grad = ctx.createLinearGradient(0, 0, 256, 0);
-    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
-    grad.addColorStop(0.15, 'rgba(255,255,255,0.35)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    // stretched across the full lane: a peak near the judgement line, an even glow everywhere else
+    grad.addColorStop(0, 'rgba(255,255,255,0.45)');
+    grad.addColorStop(0.17, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+    grad.addColorStop(1, 'rgba(255,255,255,0.3)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 4);
   });

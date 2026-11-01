@@ -1,9 +1,8 @@
 import { create } from 'zustand';
+import bundled from 'virtual:bundled-charts';
 import { audio } from '../../core/audio/AudioEngine';
-import { encodeWav } from '../../core/audio/synth';
-import { packNarg, unpackNarg } from '../../core/chart/serialize';
+import { packNarg, parseChart, unpackNarg } from '../../core/chart/serialize';
 import type { Chart } from '../../core/chart/types';
-import { DEMO_ID, buildDemoChart, renderDemoAudio } from '../../core/demo/demoSong';
 import { songsDb } from '../../storage/db';
 
 export interface SongEntry {
@@ -19,17 +18,59 @@ interface LibraryStore {
   refresh: () => Promise<void>;
 }
 
-const demoEntry = (): SongEntry => ({ id: DEMO_ID, chart: buildDemoChart(), builtin: true, updatedAt: 0 });
+// ---------------------------------------------------------------- built-in songs
+/** The chart that plays on the title screen and is listed first */
+const DEMO_FILE = 'fearless-pt2.narg';
+
+/** Every charts/*.narg shipped with the app (see the bundled-charts plugin in vite.config.ts) */
+const BUILTINS = bundled
+  .flatMap(({ file, url, chart }) => {
+    try {
+      return [{ file, url, chart: parseChart(chart) }];
+    } catch (e) {
+      console.error(`Skipping bundled chart ${file}:`, e);
+      return [];
+    }
+  })
+  .sort((a, b) => Number(b.file === DEMO_FILE) - Number(a.file === DEMO_FILE));
+
+const builtinById = new Map(BUILTINS.map((b) => [b.chart.id, b]));
+export const isBuiltinSong = (id: string): boolean => builtinById.has(id);
+
+const builtinEntries = (): SongEntry[] =>
+  BUILTINS.map((b): SongEntry => ({ id: b.chart.id, chart: b.chart, builtin: true, updatedAt: 0 }));
+
+/** Raw audio of a built-in song: the .narg is fetched once, on first use */
+const builtinAudio = new Map<string, Promise<{ name: string; data: ArrayBuffer }>>();
+const getBuiltinAudio = (id: string) => {
+  let p = builtinAudio.get(id);
+  if (!p) {
+    const b = builtinById.get(id)!;
+    p = fetch(b.url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Could not load ${b.file} (${res.status})`);
+        return res.arrayBuffer();
+      })
+      .then((bytes) => {
+        const pkg = unpackNarg(new Uint8Array(bytes));
+        return { name: pkg.audio.name, data: pkg.audio.data.slice().buffer as ArrayBuffer };
+      });
+    p.catch(() => builtinAudio.delete(id));
+    builtinAudio.set(id, p);
+  }
+  return p;
+};
 
 export const useLibrary = create<LibraryStore>((set) => ({
-  songs: [demoEntry()],
+  songs: builtinEntries(),
   loaded: false,
   refresh: async () => {
     const records = await songsDb.all().catch(() => []);
     const user = records
+      .filter((r) => !builtinById.has(r.id))
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .map((r): SongEntry => ({ id: r.id, chart: r.chart, builtin: false, updatedAt: r.updatedAt }));
-    set({ songs: [demoEntry(), ...user], loaded: true });
+    set({ songs: [...builtinEntries(), ...user], loaded: true });
   },
 }));
 
@@ -37,17 +78,10 @@ export const useLibrary = create<LibraryStore>((set) => ({
 const bufferCache = new Map<string, Promise<AudioBuffer>>();
 const CACHE_SIZE = 4;
 
-let demoBuffer: Promise<AudioBuffer> | null = null;
-const getDemoBuffer = () => (demoBuffer ??= renderDemoAudio(audio.context.sampleRate));
-
 export const getSongBuffer = (id: string): Promise<AudioBuffer> => {
-  if (id === DEMO_ID) return getDemoBuffer();
   let p = bufferCache.get(id);
   if (!p) {
-    p = songsDb.get(id).then((rec) => {
-      if (!rec) throw new Error('Song not found');
-      return audio.decode(rec.audio);
-    });
+    p = getSongAudioBytes(id).then((a) => audio.decode(a.data));
     p.catch(() => bufferCache.delete(id));
     bufferCache.set(id, p);
     if (bufferCache.size > CACHE_SIZE) bufferCache.delete(bufferCache.keys().next().value!);
@@ -57,12 +91,9 @@ export const getSongBuffer = (id: string): Promise<AudioBuffer> => {
 
 export const invalidateSongBuffer = (id: string) => bufferCache.delete(id);
 
-/** Raw audio bytes (for the editor / export). The demo is encoded to WAV on demand. */
+/** Raw audio bytes (for the editor / export) */
 export const getSongAudioBytes = async (id: string): Promise<{ name: string; data: ArrayBuffer }> => {
-  if (id === DEMO_ID) {
-    const wav = encodeWav(await getDemoBuffer(), 1);
-    return { name: 'warmup.wav', data: wav.buffer as ArrayBuffer };
-  }
+  if (builtinById.has(id)) return getBuiltinAudio(id);
   const rec = await songsDb.get(id);
   if (!rec) throw new Error('Song not found');
   return { name: rec.audioName, data: rec.audio };
@@ -91,8 +122,8 @@ export const deleteSong = async (id: string): Promise<void> => {
 
 export const importNargFile = async (file: File): Promise<Chart> => {
   const pkg = unpackNarg(new Uint8Array(await file.arrayBuffer()));
-  // a re-import of the demo or of an existing id becomes its own copy only if ids clash with built-ins
-  if (pkg.chart.id === DEMO_ID) pkg.chart.id = `${DEMO_ID}-copy-${Date.now().toString(36)}`;
+  // importing a built-in song (or an export of one) makes its own copy instead of shadowing it
+  if (builtinById.has(pkg.chart.id)) pkg.chart.id = `${pkg.chart.id}-copy-${Date.now().toString(36)}`;
   const data = pkg.audio.data.slice().buffer as ArrayBuffer;
   await audio.decode(data); // fail early on undecodable audio
   await saveSong(pkg.chart, pkg.audio.name, data);
