@@ -5,8 +5,6 @@ import { Button, Kbd } from '../components/controls';
 import { AngleFrame, DecodeText, Eyebrow, GlitchText, SectionLabel } from '../components/decor';
 import { useMenuNav } from '../components/useMenuNav';
 import { go } from '../store/app';
-import { useLibrary } from '../store/library';
-import { useMenuMusic } from '../store/menuMusic';
 import './screens.css';
 
 let unlockedOnce = false;
@@ -14,10 +12,8 @@ let unlockedOnce = false;
 export const TitleScreen: React.FC = () => {
   const [unlocked, setUnlocked] = useState(unlockedOnce);
   const keys = useSettings((s) => s.keys);
-  const demo = useLibrary((s) => s.songs[0]);
   const menuRef = useRef<HTMLElement>(null);
   useMenuNav(menuRef, { enabled: unlocked });
-  useMenuMusic(demo, unlocked);
 
   useEffect(() => {
     if (unlocked) return;

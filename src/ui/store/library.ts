@@ -19,8 +19,8 @@ interface LibraryStore {
 }
 
 // ---------------------------------------------------------------- built-in songs
-/** The chart that plays on the title screen and is listed first */
-const DEMO_FILE = 'fearless-pt2.narg';
+/** The built-in chart listed first in song select */
+const FIRST_FILE = 'fearless-pt2.narg';
 
 /** Every charts/*.narg shipped with the app (see the bundled-charts plugin in vite.config.ts) */
 const BUILTINS = bundled
@@ -32,7 +32,7 @@ const BUILTINS = bundled
       return [];
     }
   })
-  .sort((a, b) => Number(b.file === DEMO_FILE) - Number(a.file === DEMO_FILE));
+  .sort((a, b) => Number(b.file === FIRST_FILE) - Number(a.file === FIRST_FILE));
 
 const builtinById = new Map(BUILTINS.map((b) => [b.chart.id, b]));
 export const isBuiltinSong = (id: string): boolean => builtinById.has(id);
